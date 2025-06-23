@@ -8,137 +8,233 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Alert
+  Alert,
+  ScrollView,
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
-import { getUser } from '../services/auth'; // adjust path as needed
+import { useAuth } from '../context/authContext';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
 
   const handleLogin = async () => {
-  const user = await getUser();
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
 
-  if (!user) {
-    Alert.alert('Error', 'No account found. Please sign up.');
-    return;
-  }
+    setIsLoading(true);
+    try {
+      const { error } = await login(email, password);
 
-  if (username === user.username && password === user.password) {
-    navigation.navigate('Home');
-  } else {
-    Alert.alert('Error', 'Invalid username or password');
-  }
-};
+      if (error) {
+        Alert.alert('Login Failed', error.message);
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }
+    } catch (err: any) {
+      Alert.alert('Login Failed', err?.message || 'Invalid credentials');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-    >
-      <View style={styles.box}>
-        {/* 👇 Add logo image here */}
-        <Image source={require('../../assets/images/login.png')} style={styles.logo} />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.content}>
+            <Image 
+              source={require('../../assets/images/login.png')} 
+              style={styles.logo} 
+              resizeMode="contain"
+            />
+            
+            <Text style={styles.title}>Udhaar Book</Text>
+            <Text style={styles.subtitle}>Manage your shop's credit easily</Text>
 
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Login to your account</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="email" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-        />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="lock" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.toggleButton}
+                >
+                  <MaterialIcons 
+                    name={showPassword ? 'visibility-off' : 'visibility'} 
+                    size={20} 
+                    color="#888" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Logging in...' : 'Log In'}
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log In</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.link}>Don't have an account? Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                <Text style={styles.footerLink}> Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#EEF1F4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  box: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
-    alignItems: 'center',
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  content: {
+    paddingHorizontal: windowWidth * 0.08,
+    paddingBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
-    resizeMode: 'contain',
-    marginBottom: 12,
+    width: windowWidth * 0.4,
+    height: windowWidth * 0.4,
+    alignSelf: 'center',
+    marginBottom: windowHeight * 0.02,
   },
   title: {
-    fontSize: 28,
+    fontSize: windowWidth * 0.08,
     fontWeight: '700',
-    marginBottom: 4,
-    color: '#1A1A1A',
+    color: '#1E293B',
     textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
+    fontSize: windowWidth * 0.04,
+    color: '#64748B',
     textAlign: 'center',
+    marginBottom: windowHeight * 0.05,
+  },
+  inputContainer: {
+    marginBottom: windowHeight * 0.02,
+  },
+  label: {
+    fontSize: windowWidth * 0.04,
+    color: '#1E293B',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    height: 48,
-    width: '100%',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    color: '#000',
+    flex: 1,
+    height: windowHeight * 0.06,
+    color: '#1E293B',
+    fontSize: windowWidth * 0.04,
+    paddingVertical: 0,
+  },
+  toggleButton: {
+    padding: 8,
   },
   button: {
-    backgroundColor: '#2e7d32',
-    paddingVertical: 14,
+    backgroundColor: '#4F46E5',
+    paddingVertical: windowHeight * 0.02,
     borderRadius: 10,
-    marginBottom: 12,
-    width: '100%',
+    marginTop: windowHeight * 0.02,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonDisabled: {
+    backgroundColor: '#A5B4FC',
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     textAlign: 'center',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: windowWidth * 0.045,
   },
-  link: {
-    color: '#2e7d32',
-    textAlign: 'center',
-    marginTop: 6,
-    fontSize: 14,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: windowHeight * 0.03,
+  },
+  footerText: {
+    color: '#64748B',
+    fontSize: windowWidth * 0.035,
+  },
+  footerLink: {
+    color: '#4F46E5',
+    fontSize: windowWidth * 0.035,
+    fontWeight: '600',
   },
 });

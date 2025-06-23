@@ -9,140 +9,289 @@ import {
   Platform,
   Alert,
   Image,
+  ScrollView,
+  Dimensions,
+  SafeAreaView
 } from 'react-native';
-import { saveUser } from '../services/auth'; // adjust path as needed
-
+import { useAuth } from '../context/authContext';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SignUpScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { signup } = useAuth();
 
 const handleSignUp = async () => {
-  if (!username || !password) {
-    Alert.alert('Error', 'Please enter both username and password');
+  // Basic field validation
+  if (!name || !email || !password) {
+    Alert.alert('Error', 'Please fill in all fields');
     return;
   }
 
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    Alert.alert('Error', 'Please enter a valid email address');
+    return;
+  }
+
+  // Password strength validation (minimum 8 chars with at least 1 number)
+  const passwordRegex = /^(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    Alert.alert(
+      'Weak Password',
+      'Password must be at least 8 characters long and contain at least one number'
+    );
+    return;
+  }
+
+  // Name validation (minimum 2 characters)
+  if (name.trim().length < 2) {
+    Alert.alert('Error', 'Please enter a valid name (at least 2 characters)');
+    return;
+  }
+
+  setIsLoading(true);
   try {
-    await saveUser(username, password);
-    Alert.alert('Success', 'Account created! You can now log in.');
-    navigation.navigate('Login');
-  } catch (error) {
-    Alert.alert('Error', 'Failed to save user');
+    const { error } = await signup(name, email, password);
+
+    if (error) {
+      Alert.alert('Sign up failed', error.message);
+    } else {
+      Alert.alert(
+        'Account Created',
+        'Your Udhaar Book account has been successfully created!',
+        [
+          {
+            text: 'Continue',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
+    }
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    Alert.alert(
+      'Error',
+      error?.message || 'Failed to create account. Please try again later.'
+    );
+  } finally {
+    setIsLoading(false);
   }
 };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-    >
-      <View style={styles.box}>
-        {/* 👇 App logo */}
-        <Image
-          source={require('../../assets/images/signup2.png')}
-          style={styles.logo}
-        />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.content}>
+            <Image 
+              source={require('../../assets/images/signup2.png')} 
+              style={styles.logo} 
+              resizeMode="contain"
+            />
+            
+            <Text style={styles.title}>Create Your Account</Text>
+            <Text style={styles.subtitle}>Manage your shop's credit easily</Text>
 
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up with a username and password</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Full Name</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="person" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  placeholderTextColor="#999"
+                  value={name}
+                  onChangeText={setName}
+                />
+              </View>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-        />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="email" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="lock" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Create a password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.toggleButton}
+                >
+                  <MaterialIcons 
+                    name={showPassword ? 'visibility-off' : 'visibility'} 
+                    size={20} 
+                    color="#888" 
+                  />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.passwordHint}>
+                Use at least 8 characters with a mix of letters and numbers
+              </Text>
+            </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={handleSignUp}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Creating account...' : 'Sign Up'}
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}>Already have an account? Log In</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.footerLink}> Log In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#EEF1F4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  box: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
-    alignItems: 'center',
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  content: {
+    paddingHorizontal: windowWidth * 0.08,
+    paddingBottom: 40,
   },
   logo: {
-    width: 120,
-    height: 120,
-    resizeMode: 'contain',
-    marginBottom: 12,
+    width: windowWidth * 0.4,
+    height: windowWidth * 0.4,
+    alignSelf: 'center',
+    marginBottom: windowHeight * 0.02,
   },
   title: {
-    fontSize: 28,
+    fontSize: windowWidth * 0.08,
     fontWeight: '700',
-    marginBottom: 4,
-    color: '#1A1A1A',
+    color: '#1E293B',
     textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
+    fontSize: windowWidth * 0.04,
+    color: '#64748B',
     textAlign: 'center',
+    marginBottom: windowHeight * 0.05,
+  },
+  inputContainer: {
+    marginBottom: windowHeight * 0.02,
+  },
+  label: {
+    fontSize: windowWidth * 0.04,
+    color: '#1E293B',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    height: 48,
-    width: '100%',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    color: '#000',
+    flex: 1,
+    height: windowHeight * 0.06,
+    color: '#1E293B',
+    fontSize: windowWidth * 0.04,
+    paddingVertical: 0,
+  },
+  passwordHint: {
+    fontSize: windowWidth * 0.03,
+    color: '#64748B',
+    marginTop: 6,
+  },
+  toggleButton: {
+    padding: 8,
   },
   button: {
-    backgroundColor: '#1565c0',
-    paddingVertical: 14,
+    backgroundColor: '#4F46E5',
+    paddingVertical: windowHeight * 0.02,
     borderRadius: 10,
-    marginBottom: 12,
-    width: '100%',
+    marginTop: windowHeight * 0.03,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonDisabled: {
+    backgroundColor: '#A5B4FC',
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     textAlign: 'center',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: windowWidth * 0.045,
   },
-  link: {
-    color: '#1565c0',
-    textAlign: 'center',
-    marginTop: 6,
-    fontSize: 14,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: windowHeight * 0.03,
+  },
+  footerText: {
+    color: '#64748B',
+    fontSize: windowWidth * 0.035,
+  },
+  footerLink: {
+    color: '#4F46E5',
+    fontSize: windowWidth * 0.035,
+    fontWeight: '600',
   },
 });
