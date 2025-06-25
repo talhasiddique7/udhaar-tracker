@@ -29,9 +29,8 @@ interface Customer {
 
 const CustomersScreen: React.FC<Props> = ({ navigation }) => {
   const [customers, setCustomers] = useState<Customer[]>([
-    { id: '1', name: 'John Doe', phone: '9876543210', address: '123 Main St', pendingBalance: 250 },
-    { id: '2', name: 'Jane Smith', phone: '9876543211', address: '456 Oak Ave', pendingBalance: 0 },
-    { id: '3', name: 'Bob Johnson', phone: '9876543212', address: '789 Pine Rd', pendingBalance: 1500 },
+    { id: 1, name: "Ahmed Khan", phone: '9876543210', address: '123 Main St', pendingBalance: 250 },
+    { id: 2, name: "Sara Ali", phone: '9876543211', address: '456 Oak Ave', pendingBalance: 0 },
   ]);
 
   const [searchText, setSearchText] = useState('');

@@ -67,7 +67,7 @@ export default function LoginScreen({ navigation }: any) {
               resizeMode="contain"
             />
             
-            <Text style={styles.title}>Udhaar Book</Text>
+            <Text style={styles.title}>Smart Udhaar</Text>
             <Text style={styles.subtitle}>Manage your shop's credit easily</Text>
 
             <View style={styles.inputContainer}>

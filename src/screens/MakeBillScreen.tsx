@@ -38,11 +38,10 @@ const { width } = Dimensions.get('window');
 
 // Sample data - replace with your actual data source
 const sampleCustomers: Customer[] = [
-  { id: '1', name: 'John Smith', phone: '+1234567890', pendingCredit: 250 },
-  { id: '2', name: 'Sarah Johnson', phone: '+1234567891', pendingCredit: 0 },
-  { id: '3', name: 'Mike Wilson', phone: '+1234567892', pendingCredit: 150 },
-];
 
+  { id: '1', name: "Ahmed Khan", phone: '9876543210', pendingCredit: 250 },
+    { id: '2', name: "Sara Ali", phone: '9876543211', pendingCredit: 0 },
+];
 const MakeBillScreen: React.FC<Props> = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [billItems, setBillItems] = useState<BillItem[]>([]);

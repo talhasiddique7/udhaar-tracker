@@ -39,7 +39,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Customers" component={CustomersNavigator} />
-      <Tab.Screen name="AddBill" component={MakeBillScreen} />
+      <Tab.Screen name="Bills" component={MakeBillScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

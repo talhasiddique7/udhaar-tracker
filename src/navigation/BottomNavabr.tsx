@@ -29,8 +29,7 @@ const BottomNavbar: React.FC<BottomTabBarProps> = ({
   const tabs = [
     { name: 'Home', icon: 'home', label: 'Home' },
     { name: 'Customers', icon: 'users', label: 'Customers' },
-    { name: 'AddBill', icon: 'plus', label: '' }, // Special center button
-    { name: 'Logs', icon: 'file-text', label: 'Logs' },
+    { name: 'Bills', icon: 'file-invoice-dollar', label: 'Bills' },
     { name: 'Profile', icon: 'user', label: 'Profile' }
   ];
 
@@ -56,27 +55,15 @@ const BottomNavbar: React.FC<BottomTabBarProps> = ({
 
           const getIcon = () => {
             const iconColor = isFocused ? '#4F46E5' : '#64748B';
-            const iconSize = windowWidth * 0.06;
-
-            if (tab.name === 'AddBill') {
-              return (
-                <View style={styles.addButton}>
-                  <Feather 
-                    name="plus" 
-                    size={24} 
-                    color="#FFFFFF" 
-                  />
-                </View>
-              );
-            }
+            const iconSize = windowWidth * 0.07;
 
             switch (tab.name) {
               case 'Home':
                 return <MaterialIcons name="home-filled" size={iconSize} color={iconColor} />;
               case 'Customers':
                 return <FontAwesome5 name="users" size={iconSize - 2} color={iconColor} />;
-              case 'Logs':
-                return <Feather name="file-text" size={iconSize} color={iconColor} />;
+              case 'Bills':
+                return <FontAwesome5 name="file-invoice-dollar" size={iconSize - 2} color={iconColor} />;
               case 'Profile':
                 return <Ionicons name="person" size={iconSize} color={iconColor} />;
               default:
@@ -92,10 +79,7 @@ const BottomNavbar: React.FC<BottomTabBarProps> = ({
               accessibilityLabel={options?.tabBarAccessibilityLabel || tab.label}
               testID={options?.tabBarTestID}
               onPress={onPress}
-              style={[
-                styles.tab,
-                tab.name === 'AddBill' && styles.addButtonContainer
-              ]}
+              style={styles.tab}
               activeOpacity={0.7}
             >
               {getIcon()}
@@ -140,25 +124,6 @@ const styles = StyleSheet.create({
     }),
     marginTop: 4,
     fontWeight: '500',
-  },
-  addButtonContainer: {
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -30,
-    top: -20,
-  },
-  addButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#4F46E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
 });
 
